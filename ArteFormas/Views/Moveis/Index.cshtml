@@ -1,0 +1,81 @@
+﻿@model IEnumerable<ArteFormas.Models.Movel>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<div class="d-flex justify-content-between mb-10">
+    <h1>Móveis</h1>
+
+    <p>
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bg-info bi-plus-circle"></i> Criar Novo Móvel
+        </a>
+    </p>
+</div>
+
+
+<div class="card mb-4">
+    
+    <div class="card-body p-0">
+      
+            <div class="table-responsive">  
+                <table class="table table-hover table-striped mb-0">
+                    <thead class="table-light">
+                        <tr>
+                        <th style="width: 20%">
+                            @Html.DisplayNameFor(model => model.Nome)
+                        </th>
+                            
+                            <th style="width: 15%" class="text-center">Material</th>
+                            <th style="width: 10%" class="text-end">Preço Unitário</th>
+                            <th style="width: 25%">Descrição</th>
+                            <th style="width: 30%" class="text-center">Ações</th>
+                        </tr>
+
+                    </thead>
+                    <tbody>
+                    @foreach (var item in Model)
+                        {
+                   
+                            <tr>
+                                <td>
+                                    <strong>@item.Nome</strong>
+                                </td>
+                                
+                                <td class="text-center">
+
+                                <strong>@item.Material</strong>
+
+                                </td>
+                                <td class="text-end">
+                                    <strong>@item.Preco</strong>
+                                </td>
+                                <td>
+                                <strong>@item.Descricao</strong>
+                                </td>
+                                
+                                <td class="text-center">
+                                       <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-info btn-sm me-1" title="Ver Detalhes">
+                                        Detalhes
+                                    </a>
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-warning btn-sm me-1" title="Editar">
+                                        Editar
+                                    </a>
+                                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-danger btn-sm me-1" title="Excluir">
+                                        Deletar
+                                    </a>
+
+                                </td>
+
+                            </tr>
+                        }
+                    </tbody>
+
+                </table>
+            </div>
+        
+    </div>
+</div>
+
+

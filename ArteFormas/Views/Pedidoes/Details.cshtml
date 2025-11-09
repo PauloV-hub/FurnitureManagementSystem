@@ -1,0 +1,118 @@
+﻿@model ArteFormas.Models.Pedido
+
+@{
+    ViewData["Title"] = "Detalhes do Pedido";
+}
+
+<h1>Detalhes do Pedido #@Model.Id</h1>
+<hr />
+
+<div class="row">
+    <!-- Coluna da Esquerda: Informações do Pedido -->
+    <div class="col-md-6">
+        <h4>Informações do Pedido</h4>
+        <hr />
+        <dl class="row">
+            <dt class="col-sm-4">
+                @Html.DisplayNameFor(model => model.DataPedido)
+            </dt>
+            <dd class="col-sm-8">
+                @Model.DataPedido.ToString("dd/MM/yyyy")
+            </dd>
+
+            <dt class="col-sm-4">
+                @Html.DisplayNameFor(model => model.DataEntrega)
+            </dt>
+            <dd class="col-sm-8">
+                @Model.DataEntrega.ToString("dd/MM/yyyy")
+            </dd>
+
+            <dt class="col-sm-4">
+                @Html.DisplayNameFor(model => model.Status)
+            </dt>
+            <dd class="col-sm-8">
+                <span class="badge bg-warning text-black">@Model.Status</span>
+            </dd>
+            <dt class="col-sm-4">
+                @Html.DisplayNameFor(model => model.InformacoesPedido)
+            </dt>
+            <dd class="col-sm-8">
+                <p class="lead">@Model.InformacoesPedido</p>
+            </dd>
+        </dl>
+    </div>
+
+    <!-- Coluna da Direita: Informações do Cliente -->
+    <div class="col-md-6">
+        <h4>Informações do Cliente</h4>
+        <hr />
+        <dl class="row">
+            <dt class="col-sm-4">
+                @Html.DisplayNameFor(model => model.Cliente.Nome)
+            </dt>
+            <dd class="col-sm-8">
+                @Html.DisplayFor(model => model.Cliente.Nome)
+            </dd>
+
+            <dt class="col-sm-4">
+                @Html.DisplayNameFor(model => model.Cliente.Endereco)
+            </dt>
+            <dd class="col-sm-8">
+                @Html.DisplayFor(model => model.Cliente.Endereco)
+            </dd>
+
+            <dt class="col-sm-4">
+                @Html.DisplayNameFor(model => model.Cliente.Telefone)
+            </dt>
+            <dd class="col-sm-8">
+                @Html.DisplayFor(model => model.Cliente.Telefone)
+            </dd>
+        </dl>
+    </div>
+</div>
+
+<!-- Itens do Pedido -->
+<div class="row mt-4">
+    <div class="col-12">
+        <h4>Itens do Pedido</h4>
+        <hr />
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>Móvel</th>
+                    <th class="text-end">Quantidade</th>
+                    <th class="text-end">Preço Unitário</th>
+                    <th class="text-end">Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.ItensDoPedido)
+                {
+                    <tr>
+                        <td>@item.Movel.Nome</td>
+                        <td class="text-end">@item.Quantidade</td>
+                        <td class="text-end">@item.PrecoUnitario.ToString("C", new System.Globalization.CultureInfo("pt-BR"))</td>
+                        <td class="text-end">
+                            <strong>@item.Subtotal.ToString("C", new System.Globalization.CultureInfo("pt-BR"))</strong>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot class="table-secondary">
+                <tr>
+                    <td colspan="3" class="text-end"><strong>Total</strong></td>
+                    <td class="text-end">
+                        <h5 class="text-success mb-0">
+                            @Model.TotalPedido.ToString("C", new System.Globalization.CultureInfo("pt-BR"))
+                        </h5>
+                    </td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+
+<div class="mt-4">
+    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">Editar</a>
+    <a asp-action="Index" class="btn btn-secondary">Voltar para Lista</a>
+</div>

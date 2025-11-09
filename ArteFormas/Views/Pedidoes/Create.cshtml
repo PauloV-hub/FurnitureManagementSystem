@@ -1,0 +1,235 @@
+﻿@model ArteFormas.ViewModels.PedidoViewModel
+
+@{
+    ViewData["Title"] = "Criar Novo Pedido";
+}
+
+<h1>Criar Novo Pedido</h1>
+<hr />
+
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Create" id="pedidoForm">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <h4>Dados do Pedido</h4>
+
+            <input type="hidden" asp-for="Pedido.ClienteId" id="cliente-id-hidden" value="0" />
+
+            <div class="form-group mb-3">
+                <label for="cliente-autocomplete" class="control-label">Nome do Cliente</label>
+                <input id="cliente-autocomplete" name="ClienteNome" class="form-control" placeholder="Digite para buscar ou cadastrar" />
+            </div>
+
+            <div id="novo-cliente-fields" style="display:none">
+                <div class="form-group mb-2">
+                    <label for="ClienteEndereco" class="control-label">Endereço do Novo Cliente</label>
+                    <input id="ClienteEndereco" name="ClienteEndereco" class="form-control" />
+                </div>
+                <div class="form-group mb-2">
+                    <label for="ClienteTelefone" class="control-label"> Telefone do Novo Cliente</label>
+                    <input id="ClienteTelefone" name="ClienteTelefone" class="form-control" />
+                </div>
+
+            </div>
+            <div class="form-group mb-3">
+                <label asp-for="Pedido.DataEntrega" class="control-label"></label>
+                <input asp-for="Pedido.DataEntrega" class="form-control" type="date" />
+                <span asp-validation-for="Pedido.DataEntrega" class="text-danger"></span>
+            </div>
+            <div class="form-group mb-3">
+                <label asp-for="Pedido.InformacoesPedido" class="control-label"></label>
+                <input asp-for="Pedido.InformacoesPedido" class="form-control" />
+                <span asp-validation-for="Pedido.InformacoesPedido" class="text-danger"></span>
+            </div>
+
+            <div id="itens-container"></div>
+
+            <div class="form-group mt-4 d-flex justify-content-between">
+                <a asp-action="Index" class="btn btn-secondary">Voltar</a>
+                <input type="submit" value="Salvar" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+
+    <div class="col-md-8">
+        <h4>Adicionar Itens ao Pedido</h4>
+        <div class="row p-3 border rounded">
+            <div class="col-md-5">
+                <label class="control-label">Móvel</label>
+                <select id="movel-select" class="form-control" asp-items="Model.ListaDeMoveis">
+                    <option value="">-- Selecione um Móvel --</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="control-label">Quantidade</label>
+                <input id="quantidade-input" type="number" value="1" min="1" class="form-control" />
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="button" id="add-item-btn" class="btn btn-secondary w-100">Adicionar Item</button>
+            </div>
+        </div>
+
+        <h4 class="mt-4">Itens no Pedido</h4>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Móvel</th>
+                    <th class="text-center">Quantidade</th>
+                    <th class="text-end">Preço Unitário</th>
+                    <th class="text-end">Subtotal</th>
+                    <th class="text-center">Ação</th>
+                </tr>
+            </thead>
+            <tbody id="itens-tabela">
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="3" class="text-end"><strong>Total do Pedido:</strong></td>
+                    <td class="text-end"><strong id="total-pedido">R$ 0,00</strong></td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+        <p class="text-muted"><small>* Prévia dos valores. Os preços finais serão confirmados ao salvar.</small></p>
+    </div>
+</div>
+
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.3/themes/base/jquery-ui.css">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.3/jquery-ui.min.js"></script>
+    <script>
+        $(document).ready(function () {
+
+            $("#cliente-autocomplete").autocomplete({
+                source: function (request, response){
+                    $.ajax({
+                        url: "@Url.Action("Search", "Clientes")",
+                        dataType: "json",
+                        data: {term: request.term},
+                        success: function(data){
+                            response($.map(data, function (item) {
+                            return {
+                                    label: item.label,
+                                    value: item.label,
+                                    id: item.id,
+                                    telefone: item.telefone,
+                                    endereco: item.endereco
+                               };
+                            }));
+                        }
+                    });
+                },
+                minLength:2,
+                select: function(event,ui){
+                $("#cliente-id-hidden").val(ui.item.id);
+                $("#cliente-autocomplete").val(ui.item.label);
+                $("#ClienteEndereco").val(ui.item.endereco);
+                $("#ClienteTelefone").val(ui.item.telefone);
+
+                $("#novo-cliente-fields").hide();
+                return false;
+                },
+                change: function(event,ui){
+                    if(!ui.item){
+                        $("#cliente-id-hidden").val("0");
+                        $("#novo-cliente-fields").show();
+                    }
+                }
+            });
+
+            let itemIndex = 0;
+
+            // Função para formatar valor em Real (BRL)
+            function formatarReal(valor) {
+                return valor.toLocaleString('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL'
+                });
+            }
+
+            function atualizarTotal() {
+                let total = 0;
+                $("#itens-tabela tr").each(function() {
+                    const subtotalText = $(this).find("td:eq(3)").text()
+                        .replace("R$", "")
+                        .replace(/\./g, "")
+                        .replace(",", ".")
+                        .trim();
+                    const subtotal = parseFloat(subtotalText) || 0;
+                    total += subtotal;
+                });
+                $("#total-pedido").text(formatarReal(total));
+            }
+
+            $("#add-item-btn").click(function () {
+                const movelId = $("#movel-select").val();
+                const movelNome = $("#movel-select option:selected").text();
+                const quantidade = parseInt($("#quantidade-input").val());
+
+                if (!movelId || !quantidade || quantidade <= 0) {
+                    alert("Por favor, selecione um móvel e uma quantidade válida.");
+                    return;
+                }
+
+                $.ajax({
+                    url: "@Url.Action("GetPrecoMovel", "Pedidoes")",
+                    type: "GET",
+                    data: { id: movelId },
+                    success: function(response) {
+                        const precoUnitario = response.preco;
+                        const subtotal = precoUnitario * quantidade;
+
+                        const newRow = `
+                            <tr data-index="${itemIndex}">
+                                <td>${movelNome}</td>
+                                <td class="text-center">${quantidade}</td>
+                                <td class="text-end">${formatarReal(precoUnitario)}</td>
+                                <td class="text-end">${formatarReal(subtotal)}</td>
+                                <td class="text-center">
+                                    <button type="button" class="btn btn-danger btn-sm remove-item-btn">
+                                        <i class="bi bi-trash"></i> Remover
+                                    </button>
+                                </td>
+                            </tr>`;
+                        $("#itens-tabela").append(newRow);
+
+                        const hiddenInputs = `
+                            <div id="item-group-${itemIndex}">
+                                <input type="hidden" name="ItensDoPedido[${itemIndex}].MovelId" value="${movelId}" />
+                                <input type="hidden" name="ItensDoPedido[${itemIndex}].Quantidade" value="${quantidade}" />
+                            </div>`;
+                        $("#itens-container").append(hiddenInputs);
+
+                        itemIndex++;
+
+                        atualizarTotal();
+
+                        $("#movel-select").val("");
+                        $("#quantidade-input").val("1");
+                    },
+                    error: function(xhr, status, error) {
+                        console.error("Erro ao buscar preço:", error);
+                        alert("Erro ao buscar o preço do móvel. Tente novamente.");
+                    }
+                });
+            });
+
+            // Função para remover um item da lista
+            $(document).on("click", ".remove-item-btn", function () {
+                const rowIndex = $(this).closest("tr").data("index");
+                // Remove da tabela visual
+                $(this).closest("tr").remove();
+                // Remove os inputs ocultos correspondentes
+                $("#item-group-" + rowIndex).remove();
+                // Atualizar o total
+                atualizarTotal();
+            });
+        });
+    </script>
+}

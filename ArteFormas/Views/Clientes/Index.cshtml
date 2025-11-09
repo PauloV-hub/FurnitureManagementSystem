@@ -1,0 +1,57 @@
+﻿@model IEnumerable<ArteFormas.Models.Cliente>
+
+@{
+    ViewData["Title"] = "Index";
+}
+<div class="d-flex justify-content-between mb-10">
+    <h1>Clientes</h1>
+
+    <p>
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bg-info bi-plus-circle"></i> Criar Cliente
+        </a>
+    </p>
+</div>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Nome)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Endereco)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Telefone)
+            </th>
+            <th>Ações</th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Nome)
+            </td>
+            <td>
+                    @Html.DisplayFor(modelItem => item.Endereco)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Telefone)
+            </td>
+            
+            <td>
+                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-info btn-sm me-1" title="Ver Detalhes">
+                        Detalhes
+                    </a>
+                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-warning btn-sm me-1" title="Editar">
+                        Editar
+                    </a>
+                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-danger btn-sm me-1" title="Excluir">
+                        Deletar
+                    </a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

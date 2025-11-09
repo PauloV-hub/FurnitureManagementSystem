@@ -1,0 +1,284 @@
+﻿@model ArteFormas.ViewModels.PedidoViewModel
+@{
+    ViewData["Title"] = "Editar Pedido";
+}
+
+<h2>Editar Pedido</h2>
+
+<form asp-action="Edit" method="post" id="form-pedido">
+    <input type="hidden" asp-for="Pedido.Id" />
+    <input type="hidden" asp-for="Pedido.ClienteId" />
+    <input type="hidden" asp-for="Pedido.DataPedido" />
+    <input type="hidden" asp-for="Pedido.Status" />
+
+    <div class="card mb-3">
+        <div class="card-header">
+            <h5>Informações do Cliente</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <strong>Nome:</strong> @Model.Pedido.Cliente?.Nome
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label asp-for="Pedido.Cliente.Telefone" class="control-label">Telefone</label>
+                        <input asp-for="Pedido.Cliente.Telefone" class="form-control" />
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label asp-for="Pedido.Cliente.Endereco" class="control-label">Endereço</label>
+                        <input asp-for="Pedido.Cliente.Endereco" class="form-control" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Pedido.DataEntrega" class="control-label"></label>
+        <input asp-for="Pedido.DataEntrega" type="date" class="form-control" />
+        <span asp-validation-for="Pedido.DataEntrega" class="text-danger"></span>
+    </div>
+
+    <hr />
+
+    <h3>Itens do Pedido</h3>
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Móvel</th>
+                <th>Quantidade</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody id="itens-tbody">
+            @if (Model.ItensDoPedido != null && Model.ItensDoPedido.Any())
+            {
+                for (int i = 0; i < Model.ItensDoPedido.Count; i++)
+                {
+                    var item = Model.ItensDoPedido[i];
+                    <tr data-index="@i">
+                        <td>
+                            @if (item.Movel != null)
+                            {
+                                @item.Movel.Nome
+                            }
+                            else
+                            {
+                                var movelSelecionado = Model.ListaDeMoveis?.FirstOrDefault(m => m.Value == item.MovelId.ToString());
+                                @(movelSelecionado?.Text ?? "Móvel não encontrado")
+                            }
+                        </td>
+                        <td>@item.Quantidade</td>
+                        <td>
+                            <button type="button" class="btn btn-warning btn-sm" onclick="editarItem(@i)">Editar</button>
+                            <button type="button" class="btn btn-danger btn-sm" onclick="removerItem(@i)">Remover</button>
+                        </td>
+                        <input type="hidden" name="ItensDoPedido[@i].MovelId" value="@item.MovelId" class="item-movel-id" data-index="@i" />
+                        <input type="hidden" name="ItensDoPedido[@i].Quantidade" value="@item.Quantidade" class="item-quantidade" data-index="@i" />
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr id="empty-row">
+                    <td colspan="3" class="text-center">Nenhum item adicionado</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <button type="button" id="adicionar-item" class="btn btn-success">
+        <i class="bi bi-plus-circle"></i> Adicionar Item
+    </button>
+
+    <hr />
+
+    <div class="form-group">
+        <input type="submit" value="Salvar" class="btn btn-primary" />
+        <a asp-action="Index" class="btn btn-secondary">Voltar</a>
+    </div>
+</form>
+
+<!-- Modal para Adicionar/Editar Item -->
+<div class="modal fade" id="modalItem" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalItemTitle">Adicionar Item</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="modal-movel">Móvel</label>
+                    <select id="modal-movel" class="form-control">
+                        <option value="">Selecione um Móvel</option>
+                        @if (Model.ListaDeMoveis != null)
+                        {
+                            foreach (var movel in Model.ListaDeMoveis)
+                            {
+                                <option value="@movel.Value">@movel.Text</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="modal-quantidade">Quantidade</label>
+                    <input type="number" id="modal-quantidade" class="form-control" min="1" value="1" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="salvar-item">Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        let editandoIndex = -1;
+        let proximoIndex = @(Model.ItensDoPedido?.Count ?? 0);
+
+       
+        document.getElementById("form-pedido").addEventListener("submit", function(e) {
+            console.log("=== DADOS DO FORMULÁRIO ===");
+            const formData = new FormData(this);
+            for (let [key, value] of formData.entries()) {
+                console.log(key + ': ' + value);
+            }
+        });
+
+        
+        document.getElementById("adicionar-item").addEventListener("click", function () {
+            editandoIndex = -1;
+            document.getElementById("modalItemTitle").textContent = "Adicionar Item";
+            document.getElementById("modal-movel").value = "";
+            document.getElementById("modal-quantidade").value = "1";
+            $('#modalItem').modal('show');
+        });
+
+       
+        function editarItem(index) {
+            editandoIndex = index;
+            document.getElementById("modalItemTitle").textContent = "Editar Item";
+
+           
+            const movelInput = document.querySelector(`input.item-movel-id[data-index="${index}"]`);
+            const quantidadeInput = document.querySelector(`input.item-quantidade[data-index="${index}"]`);
+
+            document.getElementById("modal-movel").value = movelInput.value;
+            document.getElementById("modal-quantidade").value = quantidadeInput.value;
+
+            $('#modalItem').modal('show');
+        }
+
+       
+        document.getElementById("salvar-item").addEventListener("click", function () {
+            const movelId = document.getElementById("modal-movel").value;
+            const movelNome = document.getElementById("modal-movel").selectedOptions[0].text;
+            const quantidade = document.getElementById("modal-quantidade").value;
+
+            if (!movelId || quantidade < 1) {
+                alert("Por favor, preencha todos os campos corretamente.");
+                return;
+            }
+
+            const tbody = document.getElementById("itens-tbody");
+            const emptyRow = document.getElementById("empty-row");
+
+            if (emptyRow) {
+                emptyRow.remove();
+            }
+
+            if (editandoIndex === -1) {
+               
+                const index = proximoIndex;
+                const novaLinha = document.createElement('tr');
+                novaLinha.setAttribute('data-index', index);
+                novaLinha.innerHTML = `
+                    <td>${movelNome}</td>
+                    <td>${quantidade}</td>
+                    <td>
+                        <button type="button" class="btn btn-warning btn-sm" onclick="editarItem(${index})">Editar</button>
+                        <button type="button" class="btn btn-danger btn-sm" onclick="removerItem(${index})">Remover</button>
+                    </td>
+                    <input type="hidden" name="ItensDoPedido[${index}].MovelId" value="${movelId}" class="item-movel-id" data-index="${index}" />
+                    <input type="hidden" name="ItensDoPedido[${index}].Quantidade" value="${quantidade}" class="item-quantidade" data-index="${index}" />`;
+
+                tbody.appendChild(novaLinha);
+                proximoIndex++;
+            } else {
+              
+                const linha = tbody.querySelector(`tr[data-index="${editandoIndex}"]`);
+                linha.querySelector('td:nth-child(1)').textContent = movelNome;
+                linha.querySelector('td:nth-child(2)').textContent = quantidade;
+
+                const movelInput = linha.querySelector(`input.item-movel-id[data-index="${editandoIndex}"]`);
+                const quantInput = linha.querySelector(`input.item-quantidade[data-index="${editandoIndex}"]`);
+
+                movelInput.value = movelId;
+                quantInput.value = quantidade;
+            }
+
+            $('#modalItem').modal('hide');
+           
+        });
+
+ 
+        function removerItem(index) {
+            if (confirm("Deseja realmente remover este item?")) {
+                const tbody = document.getElementById("itens-tbody");
+                const linha = tbody.querySelector(`tr[data-index="${index}"]`);
+                linha.remove();
+
+             
+                reindexarItens();
+
+               
+                if (tbody.querySelectorAll('tr[data-index]').length === 0) {
+                    tbody.innerHTML = '<tr id="empty-row"><td colspan="3" class="text-center">Nenhum item adicionado</td></tr>';
+                }
+            }
+        }
+
+        function reindexarItens() {
+            const tbody = document.getElementById("itens-tbody");
+            const linhas = tbody.querySelectorAll('tr[data-index]');
+
+            linhas.forEach((linha, novoIndex) => {
+                const indexAntigo = linha.getAttribute('data-index');
+                linha.setAttribute('data-index', novoIndex);
+
+                
+                const btnEditar = linha.querySelector('.btn-warning');
+                const btnRemover = linha.querySelector('.btn-danger');
+                btnEditar.setAttribute('onclick', `editarItem(${novoIndex})`);
+                btnRemover.setAttribute('onclick', `removerItem(${novoIndex})`);
+
+              
+                const inputMovelId = linha.querySelector(`input.item-movel-id[data-index="${indexAntigo}"]`);
+                const inputQuantidade = linha.querySelector(`input.item-quantidade[data-index="${indexAntigo}"]`);
+
+                if (inputMovelId) {
+                    inputMovelId.name = `ItensDoPedido[${novoIndex}].MovelId`;
+                    inputMovelId.setAttribute('data-index', novoIndex);
+                }
+                if (inputQuantidade) {
+                    inputQuantidade.name = `ItensDoPedido[${novoIndex}].Quantidade`;
+                    inputQuantidade.setAttribute('data-index', novoIndex);
+                }
+            });
+
+            proximoIndex = linhas.length;
+        }
+    </script>
+}

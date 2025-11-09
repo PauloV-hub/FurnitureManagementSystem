@@ -1,0 +1,40 @@
+﻿@model ArteFormas.Models.Cliente
+
+@{
+    ViewData["Title"] = "Details";
+}
+
+<h1>Details</h1>
+
+<div class="col-md-6">
+    <h4>Informações do Cliente</h4>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-4">
+            @Html.DisplayNameFor(model => model.Nome)
+        </dt>
+        <dd class="col-sm-8">
+            @Html.DisplayFor(model => model.Nome)
+        </dd>
+
+        <dt class="col-sm-4">
+            @Html.DisplayNameFor(model => model.Endereco)
+        </dt>
+        <dd class="col-sm-8">
+            @Html.DisplayFor(model => model.Endereco)
+        </dd>
+
+        <dt class="col-sm-4">
+            @Html.DisplayNameFor(model => model.Telefone)
+        </dt>
+        <dd class="col-sm-8">
+            @Html.DisplayFor(model => model.Telefone)
+        </dd>
+    </dl>
+
+</div>
+
+<div class="mt-4">
+    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">Editar</a>
+    <a asp-action="Index" class="btn btn-secondary">Voltar para Lista</a>
+</div>

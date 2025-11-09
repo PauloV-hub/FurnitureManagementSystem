@@ -1,0 +1,66 @@
+﻿@model ArteFormas.Models.Pedido
+
+@{
+    ViewData["Title"] = "Delete";
+}
+
+<h1>Delete</h1>
+
+<h3>Are you sure you want to delete this?</h3>
+<div>
+    <h4>Pedido</h4>
+    <hr />
+    <dl class="row">
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.Cliente)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.Cliente.Id)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.DataPedido)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.DataPedido)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.Status)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.Status)
+        </dd>
+    </dl>
+    <h4 class="mt-4">Itens neste Pedido</h4>
+    @if (Model.ItensDoPedido != null && Model.ItensDoPedido.Any())
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Móvel</th>
+                    <th>Quantidade</th>
+                    <th>Preço Unitário</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.ItensDoPedido)
+                {
+                    <tr>
+                        <td>@Html.DisplayFor(modelItem => item.Movel.Nome)</td>
+                        <td>@Html.DisplayFor(modelItem => item.Quantidade)</td>
+                        <td>@Html.DisplayFor(modelItem => item.PrecoUnitario)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p>Este pedido não possui itens.</p>
+    }
+    
+    <form asp-action="Delete">
+        <input type="hidden" asp-for="Id" />
+        <input type="submit" value="Delete" class="btn btn-danger" /> |
+        <a asp-action="Index">Back to List</a>
+    </form>
+</div>
